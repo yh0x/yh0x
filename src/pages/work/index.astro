@@ -1,0 +1,84 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getCollection, render } from "astro:content";
+
+const workEntries = (await getCollection("work"))
+  .sort((a, b) => {
+    const aEnd = a.data.dateEnd === "현재" ? new Date() : a.data.dateEnd;
+    const bEnd = b.data.dateEnd === "현재" ? new Date() : b.data.dateEnd;
+    return (bEnd as Date).valueOf() - (aEnd as Date).valueOf();
+  });
+
+function formatPeriod(start: Date, end: Date | "현재"): string {
+  const startStr = start.toLocaleDateString("ko-KR", { year: "numeric", month: "long" });
+  const endStr = end === "현재" ? "현재" : (end as Date).toLocaleDateString("ko-KR", { year: "numeric", month: "long" });
+  return `${startStr} – ${endStr}`;
+}
+
+function calcDuration(start: Date, end: Date | "현재"): string {
+  const endDate = end === "현재" ? new Date() : end as Date;
+  const months = (endDate.getFullYear() - start.getFullYear()) * 12 + (endDate.getMonth() - start.getMonth());
+  const years = Math.floor(months / 12);
+  const remainMonths = months % 12;
+  if (years === 0) return `${remainMonths}개월`;
+  if (remainMonths === 0) return `${years}년`;
+  return `${years}년 ${remainMonths}개월`;
+}
+
+const renderedEntries = await Promise.all(
+  workEntries.map(async (entry) => {
+    const { Content } = await render(entry);
+    return { entry, Content };
+  })
+);
+---
+
+<BaseLayout title="Work" description="경력 사항 및 근무 이력">
+  <div class="animate-fade-up">
+    <div class="mb-10">
+      <h1 class="text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 mb-2">Work</h1>
+      <p class="text-neutral-600 dark:text-neutral-400">근무 이력 및 경력 사항</p>
+    </div>
+
+    <div class="relative">
+      <!-- Timeline line -->
+      <div class="absolute left-4 top-2 bottom-2 w-px bg-neutral-200 dark:bg-neutral-800 hidden sm:block"></div>
+
+      <div class="space-y-10">
+        {renderedEntries.map(({ entry, Content }) => (
+          <div class="sm:pl-12 relative">
+            <!-- Timeline dot -->
+            <div class="absolute left-[13px] top-2 w-2.5 h-2.5 rounded-full bg-indigo-500 border-2 border-white dark:border-neutral-950 hidden sm:block"></div>
+
+            <div class="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+              <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                <div>
+                  <h2 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                    {entry.data.link ? (
+                      <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                        {entry.data.company}
+                      </a>
+                    ) : entry.data.company}
+                  </h2>
+                  <p class="text-indigo-600 dark:text-indigo-400 font-medium mt-0.5">{entry.data.role}</p>
+                </div>
+                <div class="text-right text-sm">
+                  <p class="text-neutral-600 dark:text-neutral-400">
+                    {formatPeriod(entry.data.dateStart, entry.data.dateEnd)}
+                  </p>
+                  <p class="text-neutral-400 dark:text-neutral-600 mt-0.5">
+                    {calcDuration(entry.data.dateStart, entry.data.dateEnd)}
+                  </p>
+                </div>
+              </div>
+
+              <div class="prose prose-sm prose-neutral dark:prose-invert">
+                <Content />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,69 @@
+---
+import { SITE } from "@/consts";
+
+const navItems = [
+  { href: "/blog", label: "Blog" },
+  { href: "/projects", label: "Projects" },
+  { href: "/work", label: "Work" },
+];
+
+const pathname = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800">
+  <nav class="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+    <a href="/" class="font-semibold text-lg tracking-tight hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+      {SITE.name}
+    </a>
+
+    <div class="flex items-center gap-1">
+      {navItems.map(({ href, label }) => (
+        <a
+          href={href}
+          class:list={[
+            "px-3 py-1.5 text-sm rounded-lg transition-colors",
+            pathname.startsWith(href)
+              ? "bg-neutral-100 dark:bg-neutral-800 font-medium text-neutral-900 dark:text-neutral-100"
+              : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800",
+          ]}
+        >
+          {label}
+        </a>
+      ))}
+
+      <button
+        id="theme-toggle"
+        aria-label="테마 전환"
+        class="ml-2 p-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+      >
+        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden dark:block">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block dark:hidden">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<script>
+  const themeToggle = document.getElementById("theme-toggle");
+
+  function getTheme() {
+    return localStorage.getItem("theme") ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  }
+
+  function applyTheme(theme: string) {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }
+
+  applyTheme(getTheme());
+
+  themeToggle?.addEventListener("click", () => {
+    const current = getTheme();
+    applyTheme(current === "dark" ? "light" : "dark");
+  });
+</script>
